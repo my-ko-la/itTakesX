@@ -18,6 +18,7 @@ pen.speed(0)
 
 class Sprite():
     def __init__(self) -> None:
+        self.lives = 3
         self.x = 0
         self.y = 0
         self.heading = 0
@@ -26,33 +27,52 @@ class Sprite():
         self.shape = "square"
         self.color = "white"
         self.size = 1.0
-        
+        self.active = True
+
     def update(self):
-        self.x += self.dx
-        self.y += self.dy
+        if self.active:
+            self.x += self.dx
+            self.y += self.dy
         
-        if self.x > (SCREEN_WIDTH / 2):
-            self.x = -(SCREEN_WIDTH / 2)
-        elif self.x < -(SCREEN_WIDTH / 2):
-            self.x = (SCREEN_WIDTH / 2)
-            
-        if self.y > (SCREEN_HEIGHT / 2):
-            self.y = -(SCREEN_HEIGHT / 2)
-        if self.y < -(SCREEN_HEIGHT / 2):
-            self.y = (SCREEN_HEIGHT / 2)
+            if self.x > (SCREEN_WIDTH / 2):
+                self.x = -(SCREEN_WIDTH / 2)
+            elif self.x < -(SCREEN_WIDTH / 2):
+                self.x = (SCREEN_WIDTH / 2)
+                
+            if self.y > (SCREEN_HEIGHT / 2):
+                self.y = -(SCREEN_HEIGHT / 2)
+            if self.y < -(SCREEN_HEIGHT / 2):
+                self.y = (SCREEN_HEIGHT / 2)
 
     def render(self, pen):
-        pen.goto(self.x, self.y)
-        pen.shape(self.shape)
-        pen.shapesize(self.size, self.size, 0)
-        pen.color(self.color)
-        pen.setheading(self.heading)
-        pen.stamp()
+        if self.active:
+            pen.goto(self.x, self.y)
+            pen.shape(self.shape)
+            pen.shapesize(self.size, self.size, 0)
+            pen.color(self.color)
+            pen.setheading(self.heading)
+            pen.stamp()
 
+
+    def is_collision(self, other):
+        x = self.x-other.x
+        y = self.y-other.y
+        distance = (x**2 + y**2) ** 0.5
+        if distance < ((10*self.size)+(10*self.size)):
+            return True
+        else: 
+            return False
+
+    def goto(self, x, y):
+        self.x = x
+        self.y = y
+    
 class Player(Sprite):
     def __init__(self) -> None:
         super().__init__()
         self.shape = "triangle"
+        self.lives = 3
+        self.score = 0
 
     def accelerate(self):
         accelX = math.cos(math.radians(self.heading))
@@ -60,13 +80,17 @@ class Player(Sprite):
         self.dx += accelX
         self.dy += accelY
 
-        pass
+    def decelerate(self):
+        accelX = math.cos(math.radians(self.heading))
+        accelY = math.sin(math.radians(self.heading))
+        self.dx -= accelX * 0.3
+        self.dy -= accelY * 0.3
 
     def rot_left(self):
-        self.heading += 15
+        self.heading += 30
 
     def rot_right(self):
-        self.heading += -15
+        self.heading -= 30
 
 
 class Asteroid(Sprite):
@@ -81,12 +105,39 @@ class Missile(Sprite):
         self.shape = "circle"
         self.size = 0.2
         self.color = "red"
+        self.active = False
+
+    def update(self):
+        if self.active:
+            self.x += self.dx
+            self.y += self.dy
+        
+            if self.x > (SCREEN_WIDTH / 2):
+                self.active = False
+            elif self.x < -(SCREEN_WIDTH / 2):
+                self.active = False
+                
+            if self.y > (SCREEN_HEIGHT / 2):
+                self.active = False
+            if self.y < -(SCREEN_HEIGHT / 2):
+                self.active = False
+
+    def fire(self):
+        if not self.active:
+            self.active = True
+            self.x = p1.x
+            self.y = p1.y
+            self.heading = p1.heading
+            self.dx = math.cos(math.radians(self.heading)) * 9
+            self.dy = math.sin(math.radians(self.heading)) * 9
 
 # Players
 p1 = Player()
 
 # Asteroids
 as1 = Asteroid()
+as1.x = 100
+as1.y = -20
 as1.dx = 1.3
 as1.dy = 0.5
 
@@ -96,11 +147,13 @@ missile = Missile()
 # Game Objects
 objects = [p1, as1, missile]
 
-# Keys
+# Controls
 wn.listen()
 wn.onkeypress(p1.rot_left, "a")
 wn.onkeypress(p1.rot_right, "d")
 wn.onkeypress(p1.accelerate, "w")
+wn.onkeypress(p1.decelerate, "s")
+wn.onkeypress(missile.fire, "space")
 
 while True:
     wn.update()
@@ -110,5 +163,20 @@ while True:
         object.render(pen)
         object.update()
 
+    for object in objects:
+        if isinstance(object, Asteroid):
+            if p1.is_collision(object):
+                p1.lives -= 1 
+                p1.x = 0
+                p1.y = 0
+
+                if p1.lives <= 0:
+                    p1.active = False
+
+            if missile.active and missile.is_collision(object):
+                print("Aster ded")
+                missile.active = False
+                p1.score += 10
+                as1.goto(200,200)
 
 wn.mainloop()
