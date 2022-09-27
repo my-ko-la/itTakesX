@@ -9,6 +9,7 @@ wn.title("Online asteroids!")
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 800
 
+
 wn.setup(SCREEN_WIDTH, SCREEN_HEIGHT)
 wn.tracer(0)
 
@@ -17,12 +18,13 @@ pen = turtle.Turtle()
 pen.penup()
 pen.speed(0)
 
+
 class Sprite():
     def __init__(self) -> None:
         self.lives = 3
         self.x = 0
         self.y = 0
-        self.head = 0
+        self.head = 90
         self.dx = 0
         self.dy = 0
         self.shape = "square"
@@ -34,12 +36,12 @@ class Sprite():
         if self.active:
             self.x += self.dx
             self.y += self.dy
-        
+
             if self.x > (SCREEN_WIDTH / 2):
                 self.x = -(SCREEN_WIDTH / 2)
             elif self.x < -(SCREEN_WIDTH / 2):
                 self.x = (SCREEN_WIDTH / 2)
-                
+
             if self.y > (SCREEN_HEIGHT / 2):
                 self.y = -(SCREEN_HEIGHT / 2)
             if self.y < -(SCREEN_HEIGHT / 2):
@@ -54,20 +56,20 @@ class Sprite():
             pen.setheading(self.head)
             pen.stamp()
 
-
     def is_collision(self, other):
         x = self.x-other.x
         y = self.y-other.y
-        distance = (x**2 + y**2) ** 0.5 # distance in 2D space 
-        if distance < ((10*self.size)+(10*other.size)) : #((other.size + other.size))
+        distance = (x**2 + y**2) ** 0.5  # distance in 2D space
+        if distance < ((10*self.size)+(10*other.size)):  # ((other.size + other.size))
             return True
-        else: 
+        else:
             return False
 
     def goto(self, x, y):
         self.x = x
         self.y = y
-    
+
+
 class Player(Sprite):
     def __init__(self) -> None:
         super().__init__()
@@ -76,6 +78,15 @@ class Player(Sprite):
         self.score = 0
         # self.is_firing = False
 
+    def render(self, pen):
+        if self.active:
+            pen.goto(self.x, self.y)
+            pen.shape(self.shape)
+            pen.shapesize(self.size/2.0, self.size, 0)
+            pen.color(self.color)
+            pen.setheading(self.head)
+            pen.stamp()
+
     def accelerate(self):
         accelX = math.cos(math.radians(self.head))
         accelY = math.sin(math.radians(self.head))
@@ -83,7 +94,7 @@ class Player(Sprite):
         self.dy += accelY
 
     def decelerate(self):
-        if (self.dx > 0) and (self.dy > 0): 
+        if (self.dx > 0) and (self.dy > 0):
             accelX = math.cos(math.radians(self.head))
             accelY = math.sin(math.radians(self.head))
             self.dx -= accelX * 0.3
@@ -97,9 +108,9 @@ class Player(Sprite):
 
     def fire(self):
        # self.is_firing = True
-        if Missile.available_missiles > 0 :
+        if Missile.available_missiles > 0:
             m = Missile()
-            Missile.available_missiles -= 1 
+            Missile.available_missiles -= 1
 
             if not m.active:
                 m.active = True
@@ -108,7 +119,7 @@ class Player(Sprite):
                 m.head = p1.head
                 m.dx = math.cos(math.radians(m.head)) * 9
                 m.dy = math.sin(math.radians(m.head)) * 9
-            
+
             missiles.append(m)
             objects.append(m)
 
@@ -134,21 +145,24 @@ class Missile(Sprite):
         if self.active:
             self.x += self.dx
             self.y += self.dy
-        
+
             if self.x > (SCREEN_WIDTH / 2):
                 self.active = False
                 Missile.available_missiles += 1
+                missiles.pop()
             elif self.x < -(SCREEN_WIDTH / 2):
                 self.active = False
                 Missile.available_missiles += 1
-                
+                missiles.pop()
+
             if self.y > (SCREEN_HEIGHT / 2):
                 self.active = False
                 Missile.available_missiles += 1
+                missiles.pop()
             if self.y < -(SCREEN_HEIGHT / 2):
                 self.active = False
                 Missile.available_missiles += 1
-
+                missiles.pop()
 
 
 # Game Objects
@@ -160,19 +174,21 @@ p1 = Player()
 objects.append(p1)
 # Asteroids
 
+
 def render_asteroids(n):
     for _ in range(n):
-        asteroid = Asteroid()  
+        asteroid = Asteroid()
         x = random.randint(-500, 500)
         y = random.randint(-375, 375)
-        asteroid.goto(x,y)
+        asteroid.goto(x, y)
 
-        dx = random.randint(-2,5) / 20.0    
-        dy = random.randint(-2,5) / 20.0    
+        dx = random.randint(-2, 5) / 20.0
+        dy = random.randint(-2, 5) / 20.0
 
         asteroid.dx, asteroid.dy = dx, dy
-        asteroid.size = random.randint(10,40) / 10.0
+        asteroid.size = random.randint(10, 40) / 10.0
         objects.append(asteroid)
+
 
 render_asteroids(10)
 
@@ -184,46 +200,51 @@ wn.onkeypress(p1.accelerate, "w")
 wn.onkeypress(p1.decelerate, "s")
 wn.onkeypress(p1.fire, "space")
 
+
 while True:
     wn.update()
     pen.clear()
 
     for i in range(p1.lives):
-        pen.goto(-( SCREEN_WIDTH / 2 )+ 20 + 30 * i, (SCREEN_HEIGHT / 2)-50)
+        pen.goto(-(SCREEN_WIDTH / 2) + 20 + 30 * i, (SCREEN_HEIGHT / 2)-50)
         pen.shape("triangle")
-        pen.shapesize(0.7,0.7,0)
+        pen.shapesize(0.7, 0.7, 0)
         pen.setheading(90)
         pen.stamp()
 
     for i in range(Missile.available_missiles):
-        pen.goto(-( SCREEN_WIDTH / 2 )+ 20 + 30 * i, (SCREEN_HEIGHT / 2)-100)
+        pen.goto(-(SCREEN_WIDTH / 2) + 20 + 30 * i, (SCREEN_HEIGHT / 2)-100)
         pen.shape("circle")
-        pen.shapesize(0.5,0.5,0)
+        pen.shapesize(0.5, 0.5, 0)
         pen.setheading(90)
         pen.stamp()
 
     for object in objects:
-        object.render(pen)
         object.update()
+        object.render(pen)
 
     for object in objects:
         if isinstance(object, Asteroid):
             if p1.is_collision(object):
-                p1.lives -= 1 
-                p1.goto(0,0)
+                p1.lives -= 1
+                p1.goto(0, 0)
                 p1.dx, p1.dy, p1.head = 0, 0, 0
-                
-                object.goto(100,100)
+
+                object.goto(random.randint(100, SCREEN_WIDTH/2),
+                            random.randint(100, SCREEN_HEIGHT/2))
 
                 if p1.lives <= 0:
                     p1.active = False
+                    break
 
             for m in missiles:
                 if m.is_collision(object):
-                    object.active = False
                     m.active = False
+                    object.goto(random.randint(100, SCREEN_WIDTH/2),
+                                random.randint(100, SCREEN_HEIGHT/2))
+                    # this can causes a memory leak?
+                    missiles.pop()
                     Missile.available_missiles += 1
                     p1.score += 10
-                    object.goto(200,200)
-                
+
 wn.mainloop()
