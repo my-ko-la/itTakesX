@@ -1,2 +1,2 @@
 # itTakesX
-Multiplayer asteroids game built with Python
+Multiplayer (SOON) asteroids game built with Python
