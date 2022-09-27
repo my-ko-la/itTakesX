@@ -1,5 +1,6 @@
 import turtle
 import math
+import random
 
 wn = turtle.Screen()
 wn.bgcolor("black")
@@ -131,21 +132,32 @@ class Missile(Sprite):
             self.dx = math.cos(math.radians(self.heading)) * 9
             self.dy = math.sin(math.radians(self.heading)) * 9
 
-# Players
-p1 = Player()
 
+
+# Game Objects
+objects = []
+
+# Player(s)
+p1 = Player()
+objects.append(p1)
 # Asteroids
-as1 = Asteroid()
-as1.x = 100
-as1.y = -20
-as1.dx = 1.3
-as1.dy = 0.5
+
+for _ in range(8):
+    asteroid = Asteroid()  
+    x = random.randint(-500, 500)
+    y = random.randint(-375, 375)
+    asteroid.goto(x,y)
+
+    dx = random.randint(-2,5) / 20.0    
+    dy = random.randint(-2,5) / 20.0    
+
+    asteroid.dx, asteroid.dy = dx, dy
+    asteroid.size = random.randint(10,40) / 10.0
+    objects.append(asteroid)
 
 # Shot
 missile = Missile()
-
-# Game Objects
-objects = [p1, as1, missile]
+objects.append(missile)
 
 # Controls
 wn.listen()
@@ -159,6 +171,13 @@ while True:
     wn.update()
     pen.clear()
 
+    for i in range(p1.lives):
+        pen.goto(-( SCREEN_WIDTH / 2 )+ 20 + 30 * i, (SCREEN_HEIGHT / 2)-50)
+        pen.shape("triangle")
+        pen.shapesize(0.7,0.7,0)
+        pen.setheading(90)
+        pen.stamp()
+
     for object in objects:
         object.render(pen)
         object.update()
@@ -167,16 +186,17 @@ while True:
         if isinstance(object, Asteroid):
             if p1.is_collision(object):
                 p1.lives -= 1 
-                p1.x = 0
-                p1.y = 0
+                p1.goto(0,0)
+                object.goto(100,100)
 
                 if p1.lives <= 0:
                     p1.active = False
+                
 
             if missile.active and missile.is_collision(object):
                 print("Aster ded")
                 missile.active = False
                 p1.score += 10
-                as1.goto(200,200)
+                object.goto(200,200)
 
 wn.mainloop()
